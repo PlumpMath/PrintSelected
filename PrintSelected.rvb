@@ -1,0 +1,62 @@
+Option Explicit
+'Script written by <Junichiro Horikawa>
+'Script copyrighted by <Junichiro Horikawa>
+'Script version Monday, June 04, 2012 5:13:27 PM
+
+Call Main()
+Sub Main()
+	Dim arrObjs, strObj, arrVis, allObjs,count,count2, arrLayers, strLayer
+	Dim arrLocked(), arrLockedLayers()
+	count = 0
+	count2 = 0
+	
+	arrObjs = Rhino.GetObjects("Select Objects to Print",,, True)
+	If Not IsArray(arrObjs) Then
+		Exit Sub
+	End If
+	
+	Rhino.EnableRedraw(False)
+	arrLayers = Rhino.LayerNames()
+	For Each strLayer In arrLayers
+		If Rhino.IsLayerLocked(strLayer) Then
+			ReDim Preserve arrLockedLayers(count2)
+			arrLockedLayers(count2) = strLayer
+			Rhino.LayerVisible strLayer, False
+			
+			count2 = count2 + 1
+		End If
+	Next
+	
+	allObjs = Rhino.AllObjects()
+	For Each strObj In allObjs
+		If Rhino.IsObjectLocked(strObj) Then
+			ReDim Preserve arrLocked(count)
+			arrLocked(count) = strObj
+			Rhino.UnlockObject(strObj)
+			
+			count = count + 1
+		End If
+	Next
+	
+	If count = 0 Then
+		ReDim arrLocked(0)
+	End If
+	
+	arrVis = Rhino.NormalObjects()
+	Rhino.HideObjects(arrVis)
+	Rhino.ShowObjects(arrObjs)
+	Rhino.EnableRedraw(True)
+	
+	Rhino.Command("Print")
+	
+	Rhino.EnableRedraw(False)
+	For Each strLayer In arrLockedLayers
+		Rhino.LayerVisible strLayer, True
+	Next
+	Rhino.ShowObjects(arrVis)
+	If UBound(arrLocked) > 0 Then
+		Rhino.LockObjects(arrLocked)
+	End If
+	Rhino.EnableRedraw(True)
+	
+End Sub
